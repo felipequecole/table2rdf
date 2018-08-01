@@ -1,0 +1,63 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX iter: <http://w3id.org/sparql-generate/iter/>
+PREFIX fun: <http://w3id.org/sparql-generate/fn/>
+PREFIX rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+<custom_prefix>
+
+GENERATE {
+      #<<namespace>{?subject}_{?group}>
+      #<<namespace>{?predicate}>
+      # <<subject>_{?agency}>
+      <<namespace>{?predicate}>  
+      rdf:subject <<subject>>;
+      rdf:predicate <<predicate>>;
+      rdf:object ?object. 
+
+      <<namespace>{?predicate}>
+      rdfs:label
+      ?predicate_aux.
+
+      <<namespace>{?predicate}>
+      rdfs:comment
+      "{?predicate_aux} of {?title}".
+}
+
+SOURCE <tmp/table.html> AS ?source
+
+
+#BIND ("<prefix_src>" AS ?prefix_src)
+
+# for now, there'll be only one table
+# to do: accept more than one table
+ITERATE iter:XPath(?source,  "//table") AS ?table
+ITERATE iter:XPath(?table, "table/tr") AS ?tr
+#ITERATE iter:XPath(?tr, "tr/td") as ?td
+ITERATE iter:XPath(?tr, "tr/td[@column!=<columnPredicate>]") as ?td
+
+
+WHERE {
+
+  BIND(fun:XPath(?td,"td/text()") AS ?object_aux)
+  BIND(REPLACE(STR(?object_aux), " ", " ") AS ?object)
+  BIND(fun:XPath(?td, "td/@column") AS ?col)
+ # BIND(fun:XPath(?td, "td/@group") AS ?obj_group)
+ # BIND(fun:XPath(?table, "//th[@group={?obj_group}]/text()") AS ?group_aux)
+ # BIND(REPLACE(STR(?group_aux), " ", "_") AS ?group)
+
+  BIND(fun:XPath(?table, "//th[@column={?col}]") AS ?predicate_xml)
+  BIND(fun:XPath(?predicate_xml, "/th/text()") AS ?predicate_aux)
+  
+  BIND(REPLACE(REPLACE(REPLACE(REPLACE(STR(?predicate_aux), " ", "_"), "\\(" , ""), "\\)", ""), ",", "")  AS ?agency_aux)
+  BIND(REPLACE(REPLACE(REPLACE(?agency_aux, "\\[", ""), "\\]", ""), "–" , "_") AS ?agency)
+  
+  BIND(fun:XPath(?tr, "//td[@column=<columnPredicate>]/text()") as ?cp_aux)
+  BIND(REPLACE(REPLACE(REPLACE(REPLACE(STR(?cp_aux), " ", "_"), "\\(" , ""), "\\)", ""), ",", "")  AS ?cp)
+  BIND(CONCAT(CONCAT(?agency, "_"), ?cp) AS ?predicate)
+
+ # BIND(fun:XPath(?tr, "tr/td[<subjectIndex>]/text()") AS ?subject_aux)
+ # BIND(fun:XPath(?tr, "tr/td[<subjectIndex>]/@group") AS ?subj_group)
+ # BIND(IF(BOUND(?group_aux), ?group_aux, " ") AS ?group); 
+ # BIND(REPLACE(STR(?subject_aux), " ", "_") AS ?subject)
+
+}

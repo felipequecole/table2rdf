@@ -1,0 +1,22 @@
+@prefix ex: <http://www.example.com/ns#>.
+@prefix rr:     <http://www.w3.org/ns/r2rml#>.
+@prefix rml:    <http://semweb.mmlab.be/ns/rml#> .
+
+ex:table2rdf
+    a ex:tableMapping;
+    ex:reification "context";
+    rml:logicalSource [
+      rml:referenceFormulation ex:WebTables;
+      rml:source "https://en.wikipedia.org/wiki/World_population_estimates";
+      ex:CSSselector "table.wikitable";
+      ex:tablePosition 2
+    ];
+
+    rr:subjectMap[
+      rr:subject "http://www.example.com/World";
+    ];
+
+    rr:predicateObjectMap [
+      rr:predicate "http://www.example.com/Population";
+      ex:columnPredicate "0"
+    ];
